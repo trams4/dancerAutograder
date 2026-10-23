@@ -24,7 +24,8 @@ def calculate_angle(a, b, c):
     ba = a1 - b1
     bc = c1 - b1
 
-    ang = np.arccos( np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc)))
+    cos = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+    ang = np.arccos(np.clip(cos, -1.0, 1.0)) # rounding can push cos past 1 and give NaN
 
     return np.degrees(ang)
 
@@ -56,6 +57,9 @@ while cap.isOpened():
 
     # send to landmarker (async, result goes to process_result callback)
     result = landmarker.detect_for_video(mp_image, int(cap.get(cv2.CAP_PROP_POS_MSEC)))
+
+    if len(result.pose_landmarks) == 0:
+        angs.append([float('nan')] * 8) # keep one row per frame so data.json stays lined up with the video
 
     if len(result.pose_landmarks) > 0:
         h, w, _ =  frame.shape
